@@ -1,0 +1,158 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "Custom Hub",
+   Icon = 0,
+   LoadingTitle = "oshira Hub",
+   LoadingSubtitle = "by oshira",
+   Theme = "Default",
+   DisableRayfieldPrompts = false,
+   DisableBuildWarnings = false,
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = nil,
+      FileName = "oshira Hub"
+   }
+})
+
+local Tab = Window:CreateTab("Auto Farm", 4483362458)
+
+local Section = Tab:CreateSection("Coin Collector")
+
+local Toggle = Tab:CreateToggle({
+   Name = "Auto Collect Coins",
+   CurrentValue = false,
+   Callback = function(Value)
+      getgenv().AutoCollect = Value
+   end,
+})
+
+local Slider = Tab:CreateSlider({
+   Name = "Tween Speed",
+   Range = {0.01, 1},
+   Increment = 0.01,
+   Suffix = "Seconds",
+   CurrentValue = 0.15,
+   Callback = function(Value)
+      getgenv().TweenSpeed = Value
+   end,
+})
+
+-- default values
+getgenv().AutoCollect = false
+getgenv().TweenSpeed = 0.15
+
+local Player = game:GetService("Players").LocalPlayer
+local TweenService = game:GetService("TweenService")
+
+task.spawn(function()
+    while task.wait() do
+        if getgenv().AutoCollect then
+            pcall(function()
+                local char = Player.Character
+                if char and char.PrimaryPart then
+                    local folder = workspace.Terrain:FindFirstChild("CoinFolder")
+                    if folder then
+                        for _, a in ipairs(folder:GetChildren()) do
+                            if a:IsA("Attachment") then
+                                local speed = getgenv().TweenSpeed or 0.15
+                                local tween = TweenService:Create(char.PrimaryPart, TweenInfo.new(speed, Enum.EasingStyle.Linear), {
+                                    CFrame = CFrame.new(a.WorldPosition)
+                                })
+                                tween:Play()
+                                tween.Completed:Wait()
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+local KillSection = Tab:CreateSection("Instant Kill All")
+
+local KillToggle = Tab:CreateToggle({
+   Name = "Instant Kill All",
+   CurrentValue = false,
+   Callback = function(Value)
+      getgenv().AutoKill = Value
+   end,
+})
+
+getgenv().AutoKill = false
+
+local Player2 = game:GetService("Players").LocalPlayer
+
+task.spawn(function()
+    while task.wait(0.15) do
+        if getgenv().AutoKill then
+            pcall(function()
+                local plots = workspace.Map:FindFirstChild("Plots")
+                if plots then
+                    for _, plot in ipairs(plots:GetChildren()) do
+                        if plot:IsA("Model") and plot:GetAttribute("Owner") == Player2.Name then
+                            local npcs = plot:FindFirstChild("Npcs")
+                            if npcs then
+                                for _, npc in ipairs(npcs:GetChildren()) do
+                                    if npc:IsA("Model") then
+                                        local humanoid = npc:FindFirstChildWhichIsA("Humanoid")
+                                        if humanoid and humanoid.Health > 0 then
+                                            humanoid.Health = 0
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+local GoldMineSection = Tab:CreateSection("Auto Collect Gold Mine")
+
+local GoldMineToggle = Tab:CreateToggle({
+   Name = "Auto Collect Gold Mine",
+   CurrentValue = false,
+   Callback = function(Value)
+      getgenv().AutoGoldMine = Value
+   end,
+})
+
+getgenv().AutoGoldMine = false
+
+local ClaimGoldMine = game:GetService("ReplicatedStorage").Remotes.ClaimGoldMine
+
+task.spawn(function()
+    while task.wait(2) do
+        if getgenv().AutoGoldMine then
+            pcall(function()
+                local plots = workspace.Map:FindFirstChild("Plots")
+                if plots then
+                    for _, plot in ipairs(plots:GetChildren()) do
+                        if plot:IsA("Model") and plot:GetAttribute("Owner") == Player.Name then
+                            local main = plot:FindFirstChild("Main")
+                            if main then
+                                local plotFolder = main:FindFirstChild("Plot")
+                                if plotFolder then
+                                    local structures = plotFolder:FindFirstChild("Structures")
+                                    if structures then
+                                        for _, structure in ipairs(structures:GetChildren()) do
+                                            if structure:IsA("Model") and structure:GetAttribute("StructureName") == "GoldMine" then
+                                                ClaimGoldMine:FireServer(structure.Name)
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+        end
+    end
+end)
+
+Rayfield:LoadConfiguration()
